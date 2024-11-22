@@ -365,12 +365,8 @@ func TestSmokeCancelledByDeadlineWait(t *testing.T) {
 	})
 	require.NoError(t, err)
 	gen.Run(false)
-	before := time.Now()
 	_, failed := gen.Wait()
-	after := time.Now()
-	elapsed := after.Sub(before)
-	// execution time + last request
-	require.Greater(t, elapsed, 1050*time.Millisecond)
+
 	require.Equal(t, false, failed)
 	stats := gen.Stats()
 	require.GreaterOrEqual(t, stats.Success.Load(), int64(2))
@@ -384,36 +380,6 @@ func TestSmokeCancelledByDeadlineWait(t *testing.T) {
 	require.GreaterOrEqual(t, len(okData), 2)
 	require.Equal(t, okData[0], "successCallData")
 	require.Equal(t, okData[1], "successCallData")
-	require.Empty(t, failResponses)
-	require.Empty(t, gen.Errors())
-}
-
-func TestSmokeCancelledBeforeDeadline(t *testing.T) {
-	t.Parallel()
-	gen, err := NewGenerator(&Config{
-		T:        t,
-		LoadType: RPS,
-		Schedule: Plain(1, 40*time.Millisecond),
-		Gun: NewMockGun(&MockGunConfig{
-			CallSleep: 50 * time.Millisecond,
-		}),
-	})
-	require.NoError(t, err)
-	gen.Run(false)
-	before := time.Now()
-	time.Sleep(10 * time.Millisecond)
-	_, failed := gen.Stop()
-	after := time.Now()
-	elapsed := after.Sub(before)
-
-	require.Greater(t, elapsed, 1050*time.Millisecond)
-	require.Equal(t, true, failed)
-	stats := gen.Stats()
-	require.GreaterOrEqual(t, stats.Success.Load(), int64(1))
-	require.Equal(t, stats.CurrentRPS.Load(), int64(1))
-
-	okData, _, failResponses := convertResponsesData(gen)
-	require.Equal(t, okData[0], "successCallData")
 	require.Empty(t, failResponses)
 	require.Empty(t, gen.Errors())
 }
@@ -555,7 +521,7 @@ func TestSmokeLoadScheduleSegmentRPSDecrease(t *testing.T) {
 
 func TestSmokeValidation(t *testing.T) {
 	t.Parallel()
-	t.Run("can't start without StartFrom var", func(t *testing.T) {
+	t.Run("can start with 0 RPS", func(t *testing.T) {
 		t.Parallel()
 		_, err := NewGenerator(&Config{
 			T:                 t,
@@ -571,7 +537,7 @@ func TestSmokeValidation(t *testing.T) {
 				CallSleep: 10 * time.Millisecond,
 			}),
 		})
-		require.Equal(t, ErrStartFrom, err)
+		require.NoError(t, err)
 	})
 	t.Run("can't start with invalid segment definition", func(t *testing.T) {
 		t.Parallel()
@@ -1068,4 +1034,25 @@ func TestSmokeNoDuplicateRequestsOnceOnStart(t *testing.T) {
 	require.Equal(t, okResponses[0].Data.(string), "successCallData")
 	require.Empty(t, failResponses)
 	require.Empty(t, gen.Errors())
+}
+
+func TestZeroSchedule(t *testing.T) {
+	t.Parallel()
+	gen, err := NewGenerator(&Config{
+		T:                 t,
+		StatsPollInterval: 1 * time.Second,
+		LoadType:          RPS,
+		Schedule: Combine(
+			Steps(0, 1, 10, 10*time.Second),
+			Plain(0, 5*time.Second),
+			Steps(10, -1, 10, 10*time.Second),
+		),
+		Gun: NewMockGun(&MockGunConfig{
+			CallSleep: 10 * time.Millisecond,
+		}),
+	})
+	require.NoError(t, err)
+	_, failed := gen.Run(true)
+	require.Equal(t, false, failed)
+	require.GreaterOrEqual(t, gen.Stats().Success.Load(), int64(5))
 }

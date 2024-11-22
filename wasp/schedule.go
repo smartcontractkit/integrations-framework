@@ -23,6 +23,12 @@ func Plain(from int64, duration time.Duration) []*Segment {
 
 // Steps creates a series of increasing/decreasing Segments
 func Steps(from, increase int64, steps int, duration time.Duration) []*Segment {
+	if from == 0 {
+		from = 1
+	}
+	if steps == 0 {
+		panic("steps can't be 0 in wasp.Steps schedule")
+	}
 	segments := make([]*Segment, 0)
 	perStepDuration := duration / time.Duration(steps)
 	for i := 0; i < steps; i++ {

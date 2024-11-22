@@ -110,7 +110,7 @@ type Segment struct {
 }
 
 func (ls *Segment) Validate() error {
-	if ls.From <= 0 {
+	if ls.From < 0 {
 		return ErrStartFrom
 	}
 	if ls.Duration == 0 {
@@ -465,6 +465,12 @@ func (g *Generator) processSegment() bool {
 	g.currentSegment = g.scheduleSegments[g.stats.CurrentSegment.Load()]
 	g.currentSegmentMu.Unlock()
 	g.stats.CurrentSegment.Add(1)
+	if g.currentSegment.From == 0 {
+		g.currentSegment.From = 1
+		g.Pause()
+	} else {
+		g.Resume()
+	}
 	switch g.Cfg.LoadType {
 	case RPS:
 		newRateLimit := ratelimit.New(int(g.currentSegment.From), ratelimit.Per(g.Cfg.RateLimitUnitDuration), ratelimit.WithoutSlack)

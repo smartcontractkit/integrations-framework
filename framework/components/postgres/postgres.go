@@ -3,14 +3,17 @@ package postgres
 import (
 	"context"
 	"fmt"
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/go-connections/nat"
-	"github.com/smartcontractkit/chainlink-testing-framework/framework"
-	"github.com/testcontainers/testcontainers-go"
-	tcwait "github.com/testcontainers/testcontainers-go/wait"
 	"os"
 	"strings"
 	"time"
+
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/go-connections/nat"
+	"github.com/google/uuid"
+	"github.com/testcontainers/testcontainers-go"
+	tcwait "github.com/testcontainers/testcontainers-go/wait"
+
+	"github.com/smartcontractkit/chainlink-testing-framework/framework"
 )
 
 const (
@@ -20,10 +23,12 @@ const (
 	ExposedStaticPort = 13000
 	Database          = "chainlink"
 	DBVolumeName      = "postgresql_data"
+	DBContainerLabel  = "postgresql"
 )
 
 type Input struct {
 	Image      string  `toml:"image" validate:"required"`
+	Name       string  `toml:"name"`
 	Port       int     `toml:"port"`
 	VolumeName string  `toml:"volume_name"`
 	Databases  int     `toml:"databases"`
@@ -41,7 +46,10 @@ func NewPostgreSQL(in *Input) (*Output, error) {
 	ctx := context.Background()
 
 	bindPort := fmt.Sprintf("%s/tcp", Port)
-	containerName := framework.DefaultTCName("ns-postgresql")
+	if in.Name == "" {
+		in.Name = uuid.NewString()[0:5]
+	}
+	containerName := framework.DefaultTCName(fmt.Sprintf("%s-%s", DBContainerLabel, in.Name))
 
 	var sqlCommands []string
 	for i := 0; i <= in.Databases; i++ {

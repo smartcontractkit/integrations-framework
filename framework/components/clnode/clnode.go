@@ -5,22 +5,25 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/docker/docker/api/types/container"
-	"github.com/docker/go-connections/nat"
-	"github.com/smartcontractkit/chainlink-testing-framework/framework"
-	"github.com/smartcontractkit/chainlink-testing-framework/framework/components/postgres"
-	tc "github.com/testcontainers/testcontainers-go"
-	"github.com/testcontainers/testcontainers-go/wait"
 	"os"
 	"path/filepath"
 	"sync"
 	"text/template"
 	"time"
+
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/go-connections/nat"
+	tc "github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/wait"
+
+	"github.com/smartcontractkit/chainlink-testing-framework/framework"
+	"github.com/smartcontractkit/chainlink-testing-framework/framework/components/postgres"
 )
 
 const (
-	DefaultHTTPPort = "6688"
-	DefaultP2PPort  = "6690"
+	DefaultHTTPPort      = "6688"
+	DefaultP2PPort       = "6690"
+	CLNodeContainerLabel = "clnode"
 )
 
 var (
@@ -151,7 +154,7 @@ func newNode(in *Input, pgOut *postgres.Output) (*NodeOut, error) {
 	if in.Node.Name != "" {
 		containerName = in.Node.Name
 	} else {
-		containerName = framework.DefaultTCName("node")
+		containerName = framework.DefaultTCName(CLNodeContainerLabel)
 	}
 	customPorts := make([]string, 0)
 	for _, p := range in.Node.CustomPorts {

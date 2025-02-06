@@ -26,7 +26,7 @@ jobs:
       - name: Checkout the Repo
         uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4.2.1
       - name: Install Go
-        uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/setup-go@d2f9642bcc24a73400568756f24b72c188ac7a9a # v2.3.31
+        uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/setup-go@1ada5d85b0de3439a0ba238210d40605b5ed6704 # v2.3.32
         with:
           test_download_vendor_packages_command: cd lib && go mod download
           go_mod_path: ./lib/go.mod

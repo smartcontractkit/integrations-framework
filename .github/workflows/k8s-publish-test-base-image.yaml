@@ -39,7 +39,7 @@ jobs:
           echo "BASE_IMAGE_TAG=${{ secrets.QA_AWS_ACCOUNT_NUMBER }}.dkr.ecr.${{ secrets.QA_AWS_REGION }}.amazonaws.com/test-base-image:${{ github.event.inputs.tag }}" >> $GITHUB_ENV
 
       - name: Build Base Image
-        uses: smartcontractkit/chainlink-github-actions/docker/build-push@d2f9642bcc24a73400568756f24b72c188ac7a9a # v2.3.31
+        uses: smartcontractkit/chainlink-github-actions/docker/build-push@1ada5d85b0de3439a0ba238210d40605b5ed6704 # v2.3.32
         with:
           tags: ${{ env.BASE_IMAGE_TAG }}
           file: lib/k8s/Dockerfile.base

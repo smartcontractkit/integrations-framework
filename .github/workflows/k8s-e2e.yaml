@@ -27,7 +27,7 @@ jobs:
     steps:
       - uses: actions/checkout@eef61447b9ff4aafe5dcd4e0bbf5d482be7e7871 # v4.2.1
       - name: Build Base Image
-        uses: smartcontractkit/chainlink-github-actions/docker/build-push@d2f9642bcc24a73400568756f24b72c188ac7a9a # v2.3.31
+        uses: smartcontractkit/chainlink-github-actions/docker/build-push@1ada5d85b0de3439a0ba238210d40605b5ed6704 # v2.3.32
         with:
           tags: ${{ env.BASE_IMAGE_NAME }}
           file: lib/k8s/Dockerfile.base
@@ -41,7 +41,7 @@ jobs:
           ### test-base-image image tag for this test run :ship: => \`ci.${{ github.sha }}\`
           EOT
       - name: Build Test Runner
-        uses: smartcontractkit/chainlink-github-actions/docker/build-push@d2f9642bcc24a73400568756f24b72c188ac7a9a # v2.3.31
+        uses: smartcontractkit/chainlink-github-actions/docker/build-push@1ada5d85b0de3439a0ba238210d40605b5ed6704 # v2.3.32
         with:
           tags: ${{ env.ENV_JOB_IMAGE }}
           file: lib/k8s/Dockerfile
@@ -123,7 +123,7 @@ jobs:
       - name: Load Nix
         run: nix develop -c sh -c "cd lib && go mod download"
       - name: Setup environment
-        uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/setup-run-tests-environment@d2f9642bcc24a73400568756f24b72c188ac7a9a # v2.3.31
+        uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/setup-run-tests-environment@1ada5d85b0de3439a0ba238210d40605b5ed6704 # v2.3.32
         with:
           go_mod_path: go.mod
           QA_AWS_REGION: ${{ secrets.QA_AWS_REGION }}
@@ -131,7 +131,7 @@ jobs:
           QA_KUBECONFIG: ${{ secrets.QA_KUBECONFIG }}
           go_necessary: false
       - name: Run Remote Runner Tests
-        uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/run-tests@d2f9642bcc24a73400568756f24b72c188ac7a9a # v2.3.31
+        uses: smartcontractkit/chainlink-github-actions/chainlink-testing-framework/run-tests@1ada5d85b0de3439a0ba238210d40605b5ed6704 # v2.3.32
         with:
           cl_repo: ${{ env.CHAINLINK_IMAGE }}
           cl_image_tag: ${{ env.CHAINLINK_VERSION }}

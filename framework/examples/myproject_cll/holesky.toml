@@ -1,0 +1,12 @@
+
+[blockchain_a]
+
+  [blockchain_a.out]
+    chain_id = "17000"
+    use_cache = true
+
+    [[blockchain_a.out.nodes]]
+      docker_internal_http_url = "https://ethereum-holesky-rpc.publicnode.com"
+      docker_internal_ws_url = "wss://holesky.drpc.org"
+      http_url = "https://ethereum-holesky-rpc.publicnode.com"
+      ws_url = "wss://holesky.drpc.org"

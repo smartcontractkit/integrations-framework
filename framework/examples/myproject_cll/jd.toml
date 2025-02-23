@@ -4,8 +4,10 @@
   docker_cmd_params = ["-b", "1"]
 
 [jd]
+image = "804282218731.dkr.ecr.us-west-2.amazonaws.com/job-distributor:0.8.0"
 
 [nodeset]
+  name = "don-1"
   nodes = 5
   override_mode = "all"
 

@@ -1,6 +1,6 @@
 # Raison d'etre
 
-This chart allows to run a geth node as a non-root user, which is esential for running it on more secure clusters. Geth is running as Proof-of-Authority private network with a single node. By default ingress is disabled, so remember to enable it in `values.yaml`.
+This chart allows to run a geth node as a non-root user, which is essential for running it on more secure clusters. Geth is running as Proof-of-Authority private network with a single node. By default ingress is disabled, so remember to enable it in `values.yaml`.
 
 Sample command:
 ```bash

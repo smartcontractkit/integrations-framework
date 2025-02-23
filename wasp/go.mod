@@ -8,7 +8,7 @@ require (
 	github.com/K-Phoen/grabana v0.22.2
 	github.com/coder/websocket v1.8.12
 	github.com/gin-gonic/gin v1.10.0
-	github.com/go-resty/resty/v2 v2.15.3
+	github.com/go-resty/resty/v2 v2.16.4
 	github.com/google/uuid v1.6.0
 	github.com/grafana/dskit v0.0.0-20231120170505-765e343eda4f
 	github.com/grafana/grafana-foundation-sdk/go v0.0.0-20240326122733-6f96a993222b
@@ -265,7 +265,7 @@ require (
 	golang.org/x/crypto v0.32.0 // indirect
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56 // indirect
 	golang.org/x/mod v0.21.0 // indirect
-	golang.org/x/net v0.30.0 // indirect
+	golang.org/x/net v0.33.0 // indirect
 	golang.org/x/oauth2 v0.23.0 // indirect
 	golang.org/x/sync v0.10.0
 	golang.org/x/sys v0.29.0 // indirect

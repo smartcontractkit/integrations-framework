@@ -20,7 +20,7 @@ jobs:
     steps:
       - name: Setup GitHub Token for reading Generate Go Doc Repo
         id: setup-github-token-read
-        uses: smartcontractkit/.github/actions/setup-github-token@9e7cc0779934cae4a9028b8588c9adb64d8ce68c # setup-github-token@0.1.2
+        uses: smartcontractkit/.github/actions/setup-github-token@277f9fd8a8c9c81103ab02e631350d544ce77a8c # setup-github-token@0.1.2
         with:
           aws-role-arn: ${{ secrets.AWS_ROLE_ARN_READ_GENERATE_GO_DOC_REPO }}
           aws-lambda-url: ${{ secrets.GATI_LAMBDA_TT_URL }}
@@ -134,7 +134,7 @@ jobs:
 
       - name: Setup GitHub Token for creating a new PR
         id: setup-github-token-write
-        uses: smartcontractkit/.github/actions/setup-github-token@9e7cc0779934cae4a9028b8588c9adb64d8ce68c # setup-github-token@0.1.2
+        uses: smartcontractkit/.github/actions/setup-github-token@277f9fd8a8c9c81103ab02e631350d544ce77a8c # setup-github-token@0.1.2
         with:
           aws-role-arn: ${{ secrets.AWS_ROLE_ARN_CREATE_PR }}
           aws-lambda-url: ${{ secrets.GATI_LAMBDA_TT_URL }}

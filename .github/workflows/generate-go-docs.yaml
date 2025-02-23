@@ -183,7 +183,7 @@ jobs:
             Hey @${{ github.actor }}, no documentation was generated. Are you sure that you made changes to public functions without existing comments in your PR?
 
       - name: Send Slack notification
-        uses: slackapi/slack-github-action@6c661ce58804a1a20f6dc5fbee7f0381b469e001 # v1.25.0
+        uses: slackapi/slack-github-action@485a9d42d3a73031f12ec201c457e2162c45d02d # v2.0.0
         if: failure()
         id: slack
         env:

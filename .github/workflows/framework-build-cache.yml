@@ -1,0 +1,75 @@
+name: Framework Docker Cache Test
+on:
+  push:
+
+jobs:
+  test:
+    defaults:
+      run:
+        working-directory: framework/examples/myproject
+    env:
+      LOKI_TENANT_ID: promtail
+      LOKI_URL: http://localhost:3030/loki/api/v1/push
+      DOCKER_BUILDKIT: 1
+      CTF_CHAINLINK_IMAGE: chainlink-local-image:latest
+    runs-on: ubuntu22.04-8cores-32GB
+    permissions:
+      id-token: write
+      contents: write
+      actions: write
+    strategy:
+      fail-fast: false
+      matrix:
+        test:
+          - name: TestBuild
+            config: build.toml
+            count: 1
+            timeout: 10m
+    name: ${{ matrix.test.name }}
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@0ad4b8fadaa221de15dcec353f45205ec38ea70b # v4.1.4
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: 1.22.8
+      - name: Cache Go modules
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: go-modules-${{ hashFiles('framework/examples/myproject/go.sum') }}-${{ runner.os }}-framework-golden-examples
+          restore-keys: |
+            go-modules-${{ runner.os }}-framework-golden-examples
+            go-modules-${{ runner.os }}
+      - name: Install dependencies
+        run: go mod download
+      - name: Checkout Chainlink repository
+        uses: actions/checkout@v3
+        with:
+          repository: smartcontractkit/chainlink
+          path: chainlink-repo
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      - name: Build and Load Docker Image
+        uses: docker/build-push-action@v4
+        with:
+          cache-from: type=gha,scope=ctf
+          cache-to: type=gha,scope=ctf,mode=max
+          context: /home/runner/work/chainlink-testing-framework/chainlink-testing-framework/chainlink-repo
+          file: /home/runner/work/chainlink-testing-framework/chainlink-testing-framework/chainlink-repo/plugins/chainlink.Dockerfile
+          load: true
+          tags: ${{ env.CTF_CHAINLINK_IMAGE }}
+      - name: Run System Tests
+        env:
+          CTF_CONFIGS: ${{ matrix.test.config }}
+        run: |
+          go test -timeout ${{ matrix.test.timeout }} -v -count ${{ matrix.test.count }} -run ${{ matrix.test.name }}
+      - name: Upload Logs
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: container-logs-${{ matrix.test.name }}
+          path: framework/examples/myproject/logs
+          retention-days: 1

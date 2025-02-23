@@ -1,0 +1,20 @@
+
+[blockchain_a]
+  type = "anvil"
+  docker_cmd_params = ["-b", "1"]
+
+[data_provider]
+  port = 9111
+
+[nodeset]
+  nodes = 5
+  override_mode = "all"
+
+  [nodeset.db]
+    image = "postgres:12.0"
+
+  [[nodeset.node_specs]]
+
+    [nodeset.node_specs.node]
+      docker_ctx = "/home/runner/work/chainlink-testing-framework/chainlink-testing-framework/chainlink-repo"
+      docker_file = "plugins/chainlink.Dockerfile"

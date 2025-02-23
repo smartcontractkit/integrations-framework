@@ -310,10 +310,10 @@ func newNode(in *Input, pgOut *postgres.Output) (*NodeOut, error) {
 		})
 	}
 	req.Files = append(req.Files, files...)
-	if req.Image != "" && (in.Node.DockerFilePath != "" || in.Node.DockerContext != "") {
-		return nil, errors.New("you provided both 'image' and one of 'docker_file', 'docker_ctx' fields. Please provide either 'image' or params to build a local one")
-	}
 	if req.Image == "" {
+		if in.Node.DockerFilePath != "" || in.Node.DockerContext != "" {
+			return nil, errors.New("image field is empty but there are no 'docker_ctx' or 'docker_file' set in TOML config")
+		}
 		req.Image = TmpImageName
 		if err := framework.BuildImageOnce(once, in.Node.DockerContext, in.Node.DockerFilePath, req.Image); err != nil {
 			return nil, err

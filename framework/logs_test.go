@@ -11,11 +11,18 @@ func TestCheckLogFilesForLevels(t *testing.T) {
 		name        string
 		dir         string
 		content     string
+		ignoreFlag  bool
 		expectError bool
 	}{
 		{
 			name:        "Clean",
 			dir:         "clean",
+			expectError: false,
+		},
+		{
+			name:        "Ignore all",
+			dir:         "crit",
+			ignoreFlag:  true,
 			expectError: false,
 		},
 		{
@@ -37,6 +44,9 @@ func TestCheckLogFilesForLevels(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+			if tt.ignoreFlag {
+				t.Setenv("CTF_IGNORE_CRITICAL_LOGS", "true")
+			}
 			err := checkNodeLogErrors(filepath.Join("testdata", tt.dir))
 			if tt.expectError && err == nil {
 				t.Errorf("expected error but got none")

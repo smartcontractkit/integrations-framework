@@ -1,5 +1,7 @@
 package git
 
+// TODO: I found this a little too late, but we can probably make good use of https://github.com/go-git/go-git
+
 import (
 	"bytes"
 	"fmt"
@@ -9,6 +11,8 @@ import (
 	"strings"
 	"syscall"
 
+	"dario.cat/mergo"
+	"github.com/rs/zerolog/log"
 	"github.com/smartcontractkit/chainlink-testing-framework/tools/flakeguard/utils"
 )
 
@@ -185,4 +189,241 @@ func shouldExclude(excludes []string, item string) bool {
 		}
 	}
 	return false
+}
+
+// Data holds standard git data we're interested in
+type Data struct {
+	RepoPath      string
+	RepoURL       string
+	CurrentBranch string
+	DefaultBranch string
+	HeadSHA       string
+	userOverride  bool
+}
+
+// empty checks if the struct is empty with default values
+func (g *Data) empty() bool {
+	return g.RepoPath == "" && g.CurrentBranch == "" && g.DefaultBranch == "" && g.HeadSHA == "" && g.RepoURL == ""
+}
+
+// log prints out the inferred git data
+func (g *Data) log() {
+	var (
+		inferredAny bool
+		logMsg      = log.Debug()
+	)
+
+	if g.RepoPath != "" {
+		logMsg = logMsg.Str("repo path", g.RepoPath)
+		inferredAny = true
+	}
+	if g.CurrentBranch != "" {
+		logMsg = logMsg.Str("current branch", g.CurrentBranch)
+		inferredAny = true
+	}
+	if g.DefaultBranch != "" {
+		logMsg = logMsg.Str("default branch", g.DefaultBranch)
+		inferredAny = true
+	}
+	if g.HeadSHA != "" {
+		logMsg = logMsg.Str("head SHA", g.HeadSHA)
+		inferredAny = true
+	}
+	if g.RepoURL != "" {
+		logMsg = logMsg.Str("repo URL", g.RepoURL)
+		inferredAny = true
+	}
+	if inferredAny {
+		msg := "Inferred git data"
+		if g.userOverride {
+			msg += " with user provided overrides"
+		}
+		logMsg.Msg(msg)
+	} else {
+		log.Warn().Msg("No git data inferred")
+	}
+}
+
+// InferData uses 'git' to find out relevant git data about the repo we're in.
+// User provided data will override inferred data.
+func InferData(userProvidedData *Data) (*Data, error) {
+	_, err := exec.LookPath("git")
+	if err != nil {
+		return nil, fmt.Errorf("git not installed: %w", err)
+	}
+
+	cmd := exec.Command("git", "rev-parse", "--is-inside-work-tree")
+	combinedOut, err := cmd.CombinedOutput()
+	if err != nil {
+		return nil, fmt.Errorf("not inside a git repository: %s: %w", combinedOut, err)
+	}
+
+	var (
+		stdOut  strings.Builder
+		stdErr  strings.Builder
+		gitData = &Data{}
+	)
+	defer gitData.log()
+
+	cmd = exec.Command("git", "rev-parse", "--show-toplevel")
+	cmd.Stdout = &stdOut
+	cmd.Stderr = &stdErr
+	err = cmd.Run()
+	if err != nil {
+		return nil, fmt.Errorf("error getting repo path: %s: %w", stdErr.String(), err)
+	}
+	gitData.RepoPath = strings.TrimSpace(stdOut.String())
+
+	stdOut.Reset()
+	stdErr.Reset()
+	cmd = exec.Command("git", "rev-parse", "--abbrev-ref", "HEAD")
+	cmd.Stdout = &stdOut
+	cmd.Stderr = &stdErr
+	err = cmd.Run()
+	if err != nil {
+		return nil, fmt.Errorf("error getting branch name: %s: %w", stdErr.String(), err)
+	}
+	gitData.CurrentBranch = strings.TrimSpace(stdOut.String())
+
+	stdOut.Reset()
+	stdErr.Reset()
+	cmd = exec.Command("git", "symbolic-ref", "refs/remotes/origin/HEAD")
+	cmd.Stdout = &stdOut
+	cmd.Stderr = &stdErr
+	err = cmd.Run()
+	if err != nil {
+		return nil, fmt.Errorf("error getting default branch name: %s: %w", stdErr.String(), err)
+	}
+	gitData.DefaultBranch = strings.TrimSpace(strings.TrimPrefix(stdOut.String(), "refs/heads/"))
+
+	stdOut.Reset()
+	stdErr.Reset()
+	cmd = exec.Command("git", "rev-parse", "HEAD")
+	cmd.Stdout = &stdOut
+	cmd.Stderr = &stdErr
+	err = cmd.Run()
+	if err != nil {
+		return nil, fmt.Errorf("error getting head SHA: %s: %w", stdErr.String(), err)
+	}
+	gitData.HeadSHA = strings.TrimSpace(stdOut.String())
+
+	stdOut.Reset()
+	stdErr.Reset()
+	cmd = exec.Command("git", "config", "--get", "remote.origin.url")
+	cmd.Stdout = &stdOut
+	cmd.Stderr = &stdErr
+	err = cmd.Run()
+	if err != nil {
+		return nil, fmt.Errorf("error getting repo URL: %s: %w", stdErr.String(), err)
+	}
+	gitData.RepoURL = strings.TrimSpace(stdOut.String())
+
+	if userProvidedData != nil && !userProvidedData.empty() {
+		gitData.userOverride = true
+		if err = mergo.Merge(&gitData, userProvidedData, mergo.WithOverride); err != nil {
+			return nil, fmt.Errorf("error merging user provided GitHub data: %w", err)
+		}
+	}
+	return gitData, nil
+}
+
+// HubActionsData holds GitHub Actions specific data we're interested in
+type HubActionsData struct {
+	IsOnGitHubActions bool
+	EventName         string
+	BaseSHA           string
+	BaseBranch        string
+	WorkflowName      string
+	WorkflowRunURL    string
+	userOverride      bool
+}
+
+// empty checks if the struct is empty with default values
+func (g *HubActionsData) empty() bool {
+	return g.EventName == "" && g.BaseSHA == "" && g.BaseBranch == "" && g.WorkflowName == "" && g.WorkflowRunURL == ""
+}
+
+// log prints out the inferred GitHub data
+func (g *HubActionsData) log() {
+	if !g.IsOnGitHubActions {
+		log.Debug().Msg("Not running on GitHub Actions")
+		return
+	}
+	logMsg := log.Debug()
+	if g.EventName != "" {
+		logMsg = logMsg.Str("event name", g.EventName)
+	}
+	if g.BaseSHA != "" {
+		logMsg = logMsg.Str("base SHA", g.BaseSHA)
+	}
+	if g.BaseBranch != "" {
+		logMsg = logMsg.Str("base branch", g.BaseBranch)
+	}
+	if g.WorkflowName != "" {
+		logMsg = logMsg.Str("workflow name", g.WorkflowName)
+	}
+	if g.WorkflowRunURL != "" {
+		logMsg = logMsg.Str("workflow run URL", g.WorkflowRunURL)
+	}
+	msg := "Inferred GitHub Actions data"
+	if g.userOverride {
+		msg += " with user provided overrides"
+	}
+	logMsg.Msg(msg)
+}
+
+// InferGitHubData checks if the code is running on GitHub Actions and infers some data from it.
+// User provided data will override inferred data.
+// GitHub runners have a lot of data exposed though environment variables.
+// https://docs.github.com/en/actions/writing-workflows/choosing-what-your-workflow-does/store-information-in-variables#default-environment-variables
+func InferGitHubData(userProvidedData *HubActionsData) (*HubActionsData, error) {
+	const (
+		isOnGitHubActions = "GITHUB_ACTIONS"
+		eventName         = "GITHUB_EVENT_NAME"
+		baseRef           = "GITHUB_BASE_REF"
+		workflowName      = "GITHUB_WORKFLOW"
+		serverURL         = "GITHUB_SERVER_URL"
+		repo              = "GITHUB_REPOSITORY"
+		runID             = "GITHUB_RUN_ID"
+		prEventName       = "pull_request"
+		prTargetName      = "pull_request_target"
+	)
+	var gitHubData = &HubActionsData{}
+	defer gitHubData.log()
+
+	gitHubData.IsOnGitHubActions = os.Getenv(isOnGitHubActions) == "true"
+	if !gitHubData.IsOnGitHubActions {
+		return gitHubData, nil
+	}
+	gitHubData.EventName = strings.TrimSpace(os.Getenv(eventName))
+	gitHubData.WorkflowName = strings.TrimSpace(os.Getenv(workflowName))
+	gitHubData.WorkflowRunURL = fmt.Sprintf("%s/%s/actions/runs/%s", os.Getenv(serverURL), os.Getenv(repo), os.Getenv(runID))
+
+	// If we're not in a PR event, we don't need to infer any more data
+	if gitHubData.EventName != prEventName && gitHubData.EventName != prTargetName {
+		return gitHubData, nil
+	}
+
+	gitHubData.BaseBranch = strings.TrimSpace(os.Getenv(baseRef))
+
+	var (
+		stdOut strings.Builder
+		stdErr strings.Builder
+	)
+	cmd := exec.Command("git", "rev-parse", fmt.Sprintf("origin/%s", gitHubData.BaseBranch)) //nolint:gosec
+	cmd.Stdout = &stdOut
+	cmd.Stderr = &stdErr
+	err := cmd.Run()
+	if err != nil {
+		return nil, fmt.Errorf("error getting base SHA: %s: %w", stdErr.String(), err)
+	}
+	gitHubData.BaseSHA = strings.TrimSpace(stdOut.String())
+
+	if userProvidedData != nil && !userProvidedData.empty() {
+		gitHubData.userOverride = true
+		if err = mergo.Merge(&gitHubData, userProvidedData, mergo.WithOverride); err != nil {
+			return nil, fmt.Errorf("error merging user provided GitHub data: %w", err)
+		}
+	}
+	return gitHubData, nil
 }

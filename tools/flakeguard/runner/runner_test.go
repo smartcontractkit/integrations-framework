@@ -155,6 +155,30 @@ func TestRun(t *testing.T) {
 					exactRuns:   &defaultTestRunCount,
 					allFailures: true,
 				},
+				"TestDeeplyNestedSubTests": {
+					exactRuns:   &defaultTestRunCount,
+					allFailures: true,
+				},
+				"TestDeeplyNestedSubTests/Level1": {
+					exactRuns:   &defaultTestRunCount,
+					allFailures: true,
+				},
+				"TestDeeplyNestedSubTests/Level1/Level2": {
+					exactRuns:   &defaultTestRunCount,
+					allFailures: true,
+				},
+				"TestDeeplyNestedSubTests/Level1/Level2/Level3": {
+					exactRuns:   &defaultTestRunCount,
+					allFailures: true,
+				},
+				"TestDeeplyNestedSubTests/Level1/Level2/Level3/Pass": {
+					exactRuns:    &defaultTestRunCount,
+					allSuccesses: true,
+				},
+				"TestDeeplyNestedSubTests/Level1/Level2/Level3/Fail": {
+					exactRuns:   &defaultTestRunCount,
+					allFailures: true,
+				},
 			},
 		},
 		{

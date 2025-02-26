@@ -17,6 +17,8 @@ import (
 	"github.com/go-resty/resty/v2"
 	"github.com/google/uuid"
 	"github.com/rs/zerolog/log"
+
+	"github.com/smartcontractkit/chainlink-testing-framework/tools/flakeguard/git"
 )
 
 // FileSystem interface and implementations
@@ -42,17 +44,13 @@ func (OSFileSystem) WriteFile(filename string, data []byte, perm os.FileMode) er
 
 // aggregateOptions influence how reports are aggregated together
 type aggregateOptions struct {
-	maxPassRatio         float64
-	reportID             string
-	splunkURL            string
-	splunkToken          string
-	splunkEvent          string
-	branchName           string
-	baseSha              string
-	headSha              string
-	repoURL              string
-	gitHubWorkflowName   string
-	gitHubWorkflowRunURL string
+	maxPassRatio float64
+	reportID     string
+	gitHubData   *git.HubActionsData
+	gitData      *git.Data
+	splunkURL    string
+	splunkToken  string
+	splunkEvent  string
 }
 
 // AggregateOption is a functional option for configuring the aggregation process.
@@ -74,44 +72,17 @@ func WithSplunk(url, token string, event string) AggregateOption {
 	}
 }
 
-func WithBranchName(branchName string) AggregateOption {
+// WithGitData sets the git data for the aggregated report.
+func WithGitData(gitData *git.Data) AggregateOption {
 	return func(opts *aggregateOptions) {
-		opts.branchName = branchName
+		opts.gitData = gitData
 	}
 }
 
-// WithHeadSha sets the head SHA for the aggregated report.
-func WithHeadSha(headSha string) AggregateOption {
+// WithGitHubData sets the GitHub data for the aggregated report.
+func WithGitHubData(gitHubData *git.HubActionsData) AggregateOption {
 	return func(opts *aggregateOptions) {
-		opts.headSha = headSha
-	}
-}
-
-// WithBaseSha sets the base SHA for the aggregated report.
-func WithBaseSha(baseSha string) AggregateOption {
-	return func(opts *aggregateOptions) {
-		opts.baseSha = baseSha
-	}
-}
-
-// WithRepoURL sets the repository URL for the aggregated report.
-func WithRepoURL(repoURL string) AggregateOption {
-	return func(opts *aggregateOptions) {
-		opts.repoURL = repoURL
-	}
-}
-
-// WithGitHubWorkflowName sets the GitHub workflow name for the aggregated report.
-func WithGitHubWorkflowName(githubWorkflowName string) AggregateOption {
-	return func(opts *aggregateOptions) {
-		opts.gitHubWorkflowName = githubWorkflowName
-	}
-}
-
-// WithGitHubWorkflowRunURL sets the GitHub workflow run URL for the aggregated report.
-func WithGitHubWorkflowRunURL(githubWorkflowRunURL string) AggregateOption {
-	return func(opts *aggregateOptions) {
-		opts.gitHubWorkflowRunURL = githubWorkflowRunURL
+		opts.gitHubData = gitHubData
 	}
 }
 
@@ -433,12 +404,14 @@ func aggregate(reportChan <-chan *TestReport, errChan <-chan error, opts *aggreg
 	var (
 		fullReport = &TestReport{
 			ID:                   opts.reportID,
-			BranchName:           opts.branchName,
-			BaseSHA:              opts.baseSha,
-			HeadSHA:              opts.headSha,
-			RepoURL:              opts.repoURL,
-			GitHubWorkflowName:   opts.gitHubWorkflowName,
-			GitHubWorkflowRunURL: opts.gitHubWorkflowRunURL,
+			BranchName:           opts.gitData.CurrentBranch,
+			DefaultBranchName:    opts.gitData.DefaultBranch,
+			BaseBranchName:       opts.gitHubData.BaseBranch,
+			BaseSHA:              opts.gitHubData.BaseSHA,
+			HeadSHA:              opts.gitData.HeadSHA,
+			RepoURL:              opts.gitData.RepoURL,
+			GitHubWorkflowName:   opts.gitHubData.WorkflowName,
+			GitHubWorkflowRunURL: opts.gitHubData.WorkflowRunURL,
 			MaxPassRatio:         opts.maxPassRatio,
 		}
 		testMap       = make(map[string]TestResult)

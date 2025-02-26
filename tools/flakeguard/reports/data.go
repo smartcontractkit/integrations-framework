@@ -9,9 +9,12 @@ import (
 
 // TestReport reports on the parameters and results of one to many test runs
 type TestReport struct {
-	ID                   string       `json:"id,omitempty"`
-	GoProject            string       `json:"go_project"`
+	ID        string `json:"id,omitempty"`
+	GoProject string `json:"go_project"`
+	// Current branch name
 	BranchName           string       `json:"branch_name,omitempty"`
+	DefaultBranchName    string       `json:"default_branch_name,omitempty"`
+	BaseBranchName       string       `json:"base_branch_name,omitempty"`
 	HeadSHA              string       `json:"head_sha,omitempty"`
 	BaseSHA              string       `json:"base_sha,omitempty"`
 	RepoURL              string       `json:"repo_url,omitempty"`

@@ -4,8 +4,47 @@ import (
 	"bytes"
 	"testing"
 
+	"github.com/go-git/go-billy/v5/memfs"
+	"github.com/go-git/go-git/v5"
+	"github.com/go-git/go-git/v5/config"
+	"github.com/go-git/go-git/v5/storage/memory"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
+
+func TestInferGitData(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name             string
+		projectPath      string
+		userProvidedData *Data
+		expected         *Data
+		expectError      bool
+	}{
+		{
+			name:        "Basic Case",
+			projectPath: "/path/to/project",
+			expected: &Data{
+				RepoPath:      "/path/to/project",
+				CurrentBranch: "main",
+			},
+			expectError: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			testFiles := memfs.New()
+			gitStorage := memory.NewStorage()
+			repo, err := git.Init(gitStorage, testFiles)
+			require.NoError(t, err)
+			repo.CreateBranch(&config.Branch{
+				Name: "main",
+			})
+		})
+	}
+}
 
 func TestGetChangedGoPackagesFromDiff(t *testing.T) {
 	t.Parallel()

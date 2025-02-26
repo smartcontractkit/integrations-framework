@@ -8,6 +8,7 @@ import (
 
 	"github.com/briandowns/spinner"
 	"github.com/rs/zerolog/log"
+	"github.com/smartcontractkit/chainlink-testing-framework/tools/flakeguard/git"
 	"github.com/smartcontractkit/chainlink-testing-framework/tools/flakeguard/reports"
 	"github.com/spf13/cobra"
 )
@@ -25,15 +26,45 @@ var AggregateResultsCmd = &cobra.Command{
 		codeOwnersPath, _ := cmd.Flags().GetString("codeowners-path")
 		repoPath, _ := cmd.Flags().GetString("repo-path")
 		repoURL, _ := cmd.Flags().GetString("repo-url")
-		branchName, _ := cmd.Flags().GetString("branch-name")
+		currentBranch, _ := cmd.Flags().GetString("current-branch")
+		defaultBranch, _ := cmd.Flags().GetString("default-branch")
 		headSHA, _ := cmd.Flags().GetString("head-sha")
 		baseSHA, _ := cmd.Flags().GetString("base-sha")
+		baseBranch, _ := cmd.Flags().GetString("base-branch")
 		githubWorkflowName, _ := cmd.Flags().GetString("github-workflow-name")
 		githubWorkflowRunURL, _ := cmd.Flags().GetString("github-workflow-run-url")
 		reportID, _ := cmd.Flags().GetString("report-id")
 		splunkURL, _ := cmd.Flags().GetString("splunk-url")
 		splunkToken, _ := cmd.Flags().GetString("splunk-token")
 		splunkEvent, _ := cmd.Flags().GetString("splunk-event")
+
+		userGitData := &git.Data{
+			RepoPath:      repoPath,
+			RepoURL:       repoURL,
+			CurrentBranch: currentBranch,
+			DefaultBranch: defaultBranch,
+			HeadSHA:       headSHA,
+		}
+
+		gitData, err := git.InferData(userGitData)
+		if err != nil {
+			log.Error().Err(err).Msg("Error getting git data")
+			os.Exit(ErrorExitCode)
+		}
+
+		userGitHubData := &git.HubActionsData{
+			IsOnGitHubActions: githubWorkflowName != "" && githubWorkflowRunURL != "",
+			EventName:         splunkEvent,
+			BaseSHA:           baseSHA,
+			BaseBranch:        baseBranch,
+			WorkflowName:      githubWorkflowName,
+			WorkflowRunURL:    githubWorkflowRunURL,
+		}
+		gitHubData, err := git.InferGitHubData(userGitHubData)
+		if err != nil {
+			log.Error().Err(err).Msg("Error getting GitHub data")
+			os.Exit(ErrorExitCode)
+		}
 
 		initialDirSize, err := getDirSize(resultsPath)
 		if err != nil {
@@ -58,12 +89,8 @@ var AggregateResultsCmd = &cobra.Command{
 			resultsPath,
 			reports.WithReportID(reportID),
 			reports.WithSplunk(splunkURL, splunkToken, splunkEvent),
-			reports.WithBranchName(branchName),
-			reports.WithBaseSha(baseSHA),
-			reports.WithHeadSha(headSHA),
-			reports.WithRepoURL(repoURL),
-			reports.WithGitHubWorkflowName(githubWorkflowName),
-			reports.WithGitHubWorkflowRunURL(githubWorkflowRunURL),
+			reports.WithGitData(gitData),
+			reports.WithGitHubData(gitHubData),
 		)
 		if err != nil {
 			s.Stop()
@@ -184,14 +211,16 @@ func init() {
 	AggregateResultsCmd.Flags().StringP("codeowners-path", "", "", "Path to the CODEOWNERS file")
 	AggregateResultsCmd.Flags().StringP("repo-path", "", ".", "The path to the root of the repository/project")
 	AggregateResultsCmd.Flags().String("repo-url", "", "The repository URL")
-	AggregateResultsCmd.Flags().String("branch-name", "", "Branch name for the test report")
-	AggregateResultsCmd.Flags().String("head-sha", "", "Head commit SHA for the test report")
-	AggregateResultsCmd.Flags().String("base-sha", "", "Base commit SHA for the test report")
-	AggregateResultsCmd.Flags().String("github-workflow-name", "", "GitHub workflow name for the test report")
-	AggregateResultsCmd.Flags().String("github-workflow-run-url", "", "GitHub workflow run URL for the test report")
-	AggregateResultsCmd.Flags().String("report-id", "", "Optional identifier for the test report. Will be generated if not provided")
-	AggregateResultsCmd.Flags().String("splunk-url", "", "Optional url to simultaneously send the test results to splunk")
-	AggregateResultsCmd.Flags().String("splunk-token", "", "Optional Splunk HEC token to simultaneously send the test results to splunk")
+	AggregateResultsCmd.Flags().String("current-branch", "", "Branch name for the test report (will be inferred using 'git' if not provided)")
+	AggregateResultsCmd.Flags().String("default-branch", "", "Name of the default branch of the repo (will be inferred using 'git' if not provided)")
+	AggregateResultsCmd.Flags().String("base-branch", "", "Base branch used during a PR merge (will be inferred using 'git' if not provided)")
+	AggregateResultsCmd.Flags().String("head-sha", "", "Head commit SHA for the test report (will be inferred using 'git' if not provided)")
+	AggregateResultsCmd.Flags().String("base-sha", "", "Base sha used during a PR merge (will be inferred using 'git' if not provided)")
+	AggregateResultsCmd.Flags().String("github-workflow-name", "", "GitHub workflow name for the test report (will be inferred from github data if not provided)")
+	AggregateResultsCmd.Flags().String("github-workflow-run-url", "", "GitHub workflow run URL for the test report (will be inferred from github data if not provided)")
+	AggregateResultsCmd.Flags().String("report-id", "", "Optional identifier for the test report (will be generated if not provided)")
+	AggregateResultsCmd.Flags().String("splunk-url", "", "Optional url to send the test results to splunk")
+	AggregateResultsCmd.Flags().String("splunk-token", "", "Optional Splunk HEC token to send the test results to splunk")
 	AggregateResultsCmd.Flags().String("splunk-event", "manual", "Optional Splunk event to send as the triggering event for the test results")
 
 	if err := AggregateResultsCmd.MarkFlagRequired("results-path"); err != nil {

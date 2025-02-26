@@ -215,7 +215,7 @@ func (r *Runner) runCmd(testCmd []string, runIndex int) (tempFilePath string, pa
 		log.Info().Msgf("Running custom test command (%d/%d): %s", runIndex+1, r.RunCount, strings.Join(testCmd, " "))
 	}
 
-	cmd := exec.Command(testCmd[0], testCmd[1:]...)
+	cmd := exec.Command(testCmd[0], testCmd[1:]...) //nolint:gosec
 	cmd.Dir = r.ProjectPath
 
 	// If collecting raw output, write to both file & buffer

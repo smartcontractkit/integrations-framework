@@ -53,6 +53,9 @@ type ChaosOpts struct {
 	Remove      bool
 }
 
+// NewChaos creates a new Chaos instance based on the provided options.
+// It requires a client, a chaos object, and a logger to function properly.
+// This function is essential for initializing chaos experiments in a Kubernetes environment.
 func NewChaos(opts ChaosOpts) (*Chaos, error) {
 	if opts.Client == nil {
 		return nil, errors.New("client is required")
@@ -161,6 +164,8 @@ func (c *Chaos) Resume(ctx context.Context) error {
 	return nil
 }
 
+// Delete stops the chaos operation, updates its status, and removes the chaos object if specified. 
+// It notifies listeners of the operation's completion and handles any errors encountered during the process.
 func (c *Chaos) Delete(ctx context.Context) error {
 	defer func() {
 		// Cancel the monitoring goroutine

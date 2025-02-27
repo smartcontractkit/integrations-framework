@@ -150,4 +150,6 @@ func (l RangeGrafanaAnnotator) OnChaosEnded(chaos Chaos) {
 	l.chaosMap[chaos.GetChaosName()] = res.ID
 }
 
+// OnChaosStatusUnknown handles the event when the status of a chaos experiment is unknown.
+// It allows listeners to respond appropriately to this specific status change in the chaos lifecycle.
 func (l RangeGrafanaAnnotator) OnChaosStatusUnknown(chaos Chaos) {}

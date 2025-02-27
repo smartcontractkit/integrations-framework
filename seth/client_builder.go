@@ -373,6 +373,9 @@ func (c *ClientBuilder) WithEthClient(ethclient simulated.Client) *ClientBuilder
 	return c
 }
 
+// WithHooks sets the hooks for the ClientBuilder configuration.
+// It allows users to customize behavior during client operations 
+// by providing a set of hooks to be executed at specific events.
 func (c *ClientBuilder) WithHooks(hooks Hooks) *ClientBuilder {
 	c.config.Hooks = &hooks
 	return c

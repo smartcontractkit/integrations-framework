@@ -45,6 +45,9 @@ type PodPartitionCfg struct {
 	ExperimentCreateDelay time.Duration
 }
 
+// RunPodPartition initiates a network partition chaos experiment on specified pods.
+// It configures the experiment based on the provided PodPartitionCfg and executes it.
+// This function is useful for testing the resilience of applications under network partition scenarios.
 func (cr *NamespaceScopedChaosRunner) RunPodPartition(ctx context.Context, cfg PodPartitionCfg) (*Chaos, error) {
 	experiment, err := NewChaos(ChaosOpts{
 		Object: &v1alpha1.NetworkChaos{
@@ -115,6 +118,9 @@ type PodDelayCfg struct {
 	ExperimentCreateDelay time.Duration
 }
 
+// RunPodDelay initiates a network delay chaos experiment on specified pods.
+// It configures the delay parameters and applies them to the targeted namespace.
+// This function is useful for testing the resilience of applications under network latency conditions.
 func (cr *NamespaceScopedChaosRunner) RunPodDelay(ctx context.Context, cfg PodDelayCfg) (*Chaos, error) {
 	experiment, err := NewChaos(ChaosOpts{
 		Object: &v1alpha1.NetworkChaos{
@@ -174,6 +180,9 @@ type PodFailCfg struct {
 	ExperimentCreateDelay time.Duration
 }
 
+// RunPodFail initiates a pod failure experiment based on the provided configuration.
+// It creates a Chaos object that simulates pod failures for a specified duration,
+// allowing users to test the resilience of their applications under failure conditions.
 func (cr *NamespaceScopedChaosRunner) RunPodFail(ctx context.Context, cfg PodFailCfg) (*Chaos, error) {
 	experiment, err := NewChaos(ChaosOpts{
 		Description: cfg.Description,
@@ -233,6 +242,9 @@ type NodeCPUStressConfig struct {
 	ExperimentCreateDelay   time.Duration
 }
 
+// RunPodStressCPU initiates a CPU stress test on specified pods within a namespace.
+// It creates a scheduled chaos experiment that applies CPU load based on the provided configuration.
+// This function is useful for testing the resilience of applications under CPU stress conditions.
 func (cr *NamespaceScopedChaosRunner) RunPodStressCPU(ctx context.Context, cfg NodeCPUStressConfig) (*Chaos, error) {
 	experiment, err := NewChaos(ChaosOpts{
 		Description: cfg.Description,

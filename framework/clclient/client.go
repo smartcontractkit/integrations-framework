@@ -1240,6 +1240,8 @@ func (c *ChainlinkClient) GetForwarders() (*Forwarders, *http.Response, error) {
 	return response, resp.RawResponse, err
 }
 
+// NewETHKey generates a new Ethereum key pair and encrypts the private key using the provided password.
+// It returns the encrypted key in JSON format and the corresponding Ethereum address, or an error if the process fails.
 func NewETHKey(password string) ([]byte, common.Address, error) {
 	privateKey, err := ecdsa.GenerateKey(crypto.S256(), rand.Reader)
 	var address common.Address

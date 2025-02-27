@@ -134,4 +134,6 @@ func (l SingleLineGrafanaAnnotator) OnChaosEnded(chaos Chaos) {
 	l.logger.Debug().Any("GrafanaResponse", resp.String()).Msg("Annotated chaos experiment end")
 }
 
+// OnChaosStatusUnknown handles the event when the status of a chaos experiment is unknown.
+// It allows listeners to respond appropriately to this specific status change in the chaos lifecycle.
 func (l SingleLineGrafanaAnnotator) OnChaosStatusUnknown(chaos Chaos) {}

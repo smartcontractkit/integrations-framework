@@ -236,6 +236,8 @@ func (d *JSONStrDuration) UnmarshalJSON(b []byte) error {
 	}
 }
 
+// MustParseDuration parses a duration string in Go's format and returns the corresponding time.Duration.
+// It panics if the string cannot be parsed, ensuring that the caller receives a valid duration.
 func MustParseDuration(s string) time.Duration {
 	d, err := time.ParseDuration(s)
 	if err != nil {

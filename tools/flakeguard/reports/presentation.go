@@ -205,11 +205,11 @@ func renderSummaryTable(w io.Writer, summary *SummaryData, markdown bool, collap
 	summaryData := [][]string{
 		{"Category", "Total"},
 		{"Unique Tests", fmt.Sprintf("%d", summary.UniqueTestsRun)},
+		{"Unique Flaky Tests", fmt.Sprintf("%d (%s)", summary.FlakyTests, summary.FlakyTestPercent)},
 		{"Unique Skipped Tests", fmt.Sprintf("%d", summary.UniqueSkippedTestCount)},
+		{"Unique Panicked Tests", fmt.Sprintf("%d", summary.PanickedTests)},
 		{"Total Test Runs", fmt.Sprintf("%d", summary.TotalRuns)},
 		{"Passed Test Runs", fmt.Sprintf("%d (%s)", summary.PassedRuns, summary.PassPercent)},
-		{"Flaky Test Runs", fmt.Sprintf("%d (%s)", summary.FlakyTests, summary.FlakyTestPercent)},
-		{"Panicked Tests", fmt.Sprintf("%d", summary.PanickedTests)},
 	}
 	// Only include "Raced Tests" row if race detection is enabled.
 	if raceDetection {

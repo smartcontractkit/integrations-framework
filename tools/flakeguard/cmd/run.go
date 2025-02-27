@@ -41,6 +41,7 @@ var RunTestsCmd = &cobra.Command{
 		useShuffle, _ := cmd.Flags().GetBool("shuffle")
 		shuffleSeed, _ := cmd.Flags().GetString("shuffle-seed")
 		omitOutputsOnSuccess, _ := cmd.Flags().GetBool("omit-test-outputs-on-success")
+		ignoreParentFailuresOnSubtests, _ := cmd.Flags().GetBool("ignore-parent-failures-on-subtests")
 
 		outputDir := filepath.Dir(outputPath)
 		initialDirSize, err := getDirSize(outputDir)
@@ -63,7 +64,6 @@ var RunTestsCmd = &cobra.Command{
 		// Determine test packages
 		var testPackages []string
 		if len(testCmdStrings) == 0 {
-			// No custom command -> parse packages
 			if testPackagesJson != "" {
 				if err := json.Unmarshal([]byte(testPackagesJson), &testPackages); err != nil {
 					log.Error().Err(err).Msg("Error decoding test packages JSON")
@@ -79,18 +79,19 @@ var RunTestsCmd = &cobra.Command{
 
 		// Initialize the runner
 		testRunner := runner.Runner{
-			ProjectPath:          projectPath,
-			Verbose:              true,
-			RunCount:             runCount,
-			Timeout:              timeout,
-			Tags:                 tags,
-			UseRace:              useRace,
-			SkipTests:            skipTests,
-			SelectTests:          selectTests,
-			UseShuffle:           useShuffle,
-			ShuffleSeed:          shuffleSeed,
-			OmitOutputsOnSuccess: omitOutputsOnSuccess,
-			MaxPassRatio:         maxPassRatio,
+			ProjectPath:                    projectPath,
+			Verbose:                        true,
+			RunCount:                       runCount,
+			Timeout:                        timeout,
+			Tags:                           tags,
+			UseRace:                        useRace,
+			SkipTests:                      skipTests,
+			SelectTests:                    selectTests,
+			UseShuffle:                     useShuffle,
+			ShuffleSeed:                    shuffleSeed,
+			OmitOutputsOnSuccess:           omitOutputsOnSuccess,
+			MaxPassRatio:                   maxPassRatio,
+			IgnoreParentFailuresOnSubtests: ignoreParentFailuresOnSubtests,
 		}
 
 		// Run the tests
@@ -105,7 +106,6 @@ var RunTestsCmd = &cobra.Command{
 				os.Exit(ErrorExitCode)
 			}
 		} else {
-			// Otherwise, use the normal go test approach
 			testReport, err = testRunner.RunTestPackages(testPackages)
 			if err != nil {
 				log.Fatal().Err(err).Msg("Error running test packages")
@@ -180,6 +180,7 @@ func init() {
 	RunTestsCmd.Flags().StringSlice("select-tests", nil, "Comma-separated list of test names to specifically run")
 	RunTestsCmd.Flags().Float64("max-pass-ratio", 1.0, "The maximum pass ratio threshold for a test to be considered flaky. Any tests below this pass rate will be considered flaky.")
 	RunTestsCmd.Flags().Bool("omit-test-outputs-on-success", true, "Omit test outputs and package outputs for tests that pass")
+	RunTestsCmd.Flags().Bool("ignore-parent-failures-on-subtests", false, "Ignore failures in parent tests when only subtests fail")
 }
 
 func checkDependencies(projectPath string) error {

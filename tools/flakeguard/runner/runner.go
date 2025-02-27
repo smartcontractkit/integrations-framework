@@ -16,6 +16,7 @@ import (
 	"time"
 
 	"github.com/rs/zerolog/log"
+	"github.com/smartcontractkit/chainlink-testing-framework/tools/flakeguard/go-test-transform/pkg/transformer"
 	"github.com/smartcontractkit/chainlink-testing-framework/tools/flakeguard/reports"
 )
 
@@ -26,22 +27,23 @@ var (
 
 // Runner describes the test run parameters and raw test outputs
 type Runner struct {
-	ProjectPath          string        // Path to the Go project directory.
-	prettyProjectPath    string        // Go project package path, formatted for pretty printing.
-	Verbose              bool          // If true, provides detailed logging.
-	RunCount             int           // Number of times to run the tests.
-	UseRace              bool          // Enable race detector.
-	Timeout              time.Duration // Test timeout
-	Tags                 []string      // Build tags.
-	UseShuffle           bool          // Enable test shuffling. -shuffle=on flag.
-	ShuffleSeed          string        // Set seed for test shuffling -shuffle={seed} flag. Must be used with UseShuffle.
-	FailFast             bool          // Stop on first test failure.
-	SkipTests            []string      // Test names to exclude.
-	SelectTests          []string      // Test names to include.
-	CollectRawOutput     bool          // Set to true to collect test output for later inspection.
-	OmitOutputsOnSuccess bool          // Set to true to omit test outputs on success.
-	MaxPassRatio         float64       // Maximum pass ratio threshold for a test to be considered flaky.
-	rawOutputs           map[string]*bytes.Buffer
+	ProjectPath                    string        // Path to the Go project directory.
+	prettyProjectPath              string        // Go project package path, formatted for pretty printing.
+	Verbose                        bool          // If true, provides detailed logging.
+	RunCount                       int           // Number of times to run the tests.
+	UseRace                        bool          // Enable race detector.
+	Timeout                        time.Duration // Test timeout
+	Tags                           []string      // Build tags.
+	UseShuffle                     bool          // Enable test shuffling. -shuffle=on flag.
+	ShuffleSeed                    string        // Set seed for test shuffling -shuffle={seed} flag. Must be used with UseShuffle.
+	FailFast                       bool          // Stop on first test failure.
+	SkipTests                      []string      // Test names to exclude.
+	SelectTests                    []string      // Test names to include.
+	CollectRawOutput               bool          // Set to true to collect test output for later inspection.
+	OmitOutputsOnSuccess           bool          // Set to true to omit test outputs on success.
+	MaxPassRatio                   float64       // Maximum pass ratio threshold for a test to be considered flaky.
+	IgnoreParentFailuresOnSubtests bool          // Ignore failures in parent tests when only subtests fail.
+	rawOutputs                     map[string]*bytes.Buffer
 }
 
 // RunTestPackages executes the tests for each provided package and aggregates all results.
@@ -283,6 +285,15 @@ func (e entry) String() string {
 // Subtests add more complexity, as panics in subtests are only reported in their parent's output,
 // and cannot be accurately attributed to the subtest that caused them.
 func (r *Runner) parseTestResults(filePaths []string) ([]reports.TestResult, error) {
+	// If the option is enabled, transform each JSON output file before parsing.
+	if r.IgnoreParentFailuresOnSubtests {
+		transformedPaths, err := r.transformTestOutputFiles(filePaths)
+		if err != nil {
+			return nil, err
+		}
+		filePaths = transformedPaths
+	}
+
 	var (
 		testDetails         = make(map[string]*reports.TestResult) // Holds run, pass counts, and other details for each test
 		panickedPackages    = map[string]struct{}{}                // Packages with tests that panicked
@@ -593,6 +604,36 @@ func (r *Runner) parseTestResults(filePaths []string) ([]reports.TestResult, err
 	}
 
 	return results, nil
+}
+
+// transformTestOutputFiles transforms the test output JSON files to ignore parent failures when only subtests fail.
+// It returns the paths to the transformed files.
+func (r *Runner) transformTestOutputFiles(filePaths []string) ([]string, error) {
+	transformedPaths := make([]string, len(filePaths))
+	for i, origPath := range filePaths {
+		inFile, err := os.Open(origPath)
+		if err != nil {
+			return nil, fmt.Errorf("failed to open original file %s: %w", origPath, err)
+		}
+		// Create a temporary file for the transformed output.
+		outFile, err := os.CreateTemp("", "transformed-output-*.json")
+		if err != nil {
+			inFile.Close()
+			return nil, fmt.Errorf("failed to create transformed temp file: %w", err)
+		}
+		// Transform the JSON output.
+		// The transformer option is set to ignore parent failures when only subtests fail.
+		err = transformer.TransformJSON(inFile, outFile, transformer.NewOptions(true))
+		inFile.Close()
+		outFile.Close()
+		if err != nil {
+			return nil, fmt.Errorf("failed to transform output file %s: %v", origPath, err)
+		}
+		// Use the transformed file path.
+		transformedPaths[i] = outFile.Name()
+		os.Remove(origPath)
+	}
+	return transformedPaths, nil
 }
 
 // attributePanicToTest properly attributes panics to the test that caused them.

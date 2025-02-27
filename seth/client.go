@@ -1015,6 +1015,14 @@ func (m *Client) DeployContract(auth *bind.TransactOpts, name string, abi abi.AB
 		}
 	}
 
+	if m.Cfg.Hooks != nil && m.Cfg.Hooks.ContractDeployment.Pre != nil {
+		if err := m.Cfg.Hooks.ContractDeployment.Pre(auth, name, abi, bytecode, params...); err != nil {
+			return DeploymentData{}, errors.Wrap(err, "pre-hook failed")
+		}
+	} else {
+		L.Trace().Msg("No pre-contract deployment hook defined. Skipping")
+	}
+
 	address, tx, contract, err := bind.DeployContract(auth, abi, bytecode, m.Client, params...)
 	if err != nil {
 		return DeploymentData{}, wrapErrInMessageWithASuggestion(err)
@@ -1031,7 +1039,14 @@ func (m *Client) DeployContract(auth *bind.TransactOpts, name string, abi abi.AB
 		m.ContractStore.AddABI(name, abi)
 	}
 
-	// retry is needed both for gas bumping and for waiting for deployment to finish (sometimes there's no code at address the first time we check)
+	if m.Cfg.Hooks != nil && m.Cfg.Hooks.ContractDeployment.Post != nil {
+		if err := m.Cfg.Hooks.ContractDeployment.Post(m, tx); err != nil {
+			return DeploymentData{}, errors.Wrap(err, "post-hook failed")
+		}
+	} else {
+		L.Trace().Msg("No post-contract deployment hook defined. Skipping")
+	}
+
 	if err := retry.Do(
 		func() error {
 			ctx, cancel := context.WithTimeout(context.Background(), m.Cfg.Network.TxnTimeout.Duration())

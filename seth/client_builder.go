@@ -373,6 +373,11 @@ func (c *ClientBuilder) WithEthClient(ethclient simulated.Client) *ClientBuilder
 	return c
 }
 
+func (c *ClientBuilder) WithHooks(hooks Hooks) *ClientBuilder {
+	c.config.Hooks = &hooks
+	return c
+}
+
 // WithReadOnlyMode sets the client to read-only mode. It removes all private keys from all Networks and disables nonce protection and ephemeral addresses.
 func (c *ClientBuilder) WithReadOnlyMode() *ClientBuilder {
 	c.readonly = true

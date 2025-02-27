@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/rs/zerolog"
+
 	"github.com/smartcontractkit/chainlink-testing-framework/parrot"
 )
 
@@ -237,7 +238,7 @@ func ExampleRecorder_external() {
 	recorderHost := "localhost"
 
 	// Create a new recorder with our host
-	recorder, err := parrot.NewRecorder(parrot.WithHost(recorderHost))
+	recorder, err := parrot.NewRecorder(parrot.WithRecorderHost(recorderHost))
 	if err != nil {
 		panic(err)
 	}

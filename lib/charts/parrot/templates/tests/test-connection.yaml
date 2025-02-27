@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "parrot.fullname" . }}-test-health"
+  labels:
+    {{- include "parrot.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+spec:
+  containers:
+    - name: wget
+      image: busybox
+      command: ['wget']
+      args: ['{{ include "parrot.fullname" . }}:{{ .Values.service.port }}/health']
+  restartPolicy: Never

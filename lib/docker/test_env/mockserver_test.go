@@ -28,6 +28,7 @@ func TestMockServerSetStringValue(t *testing.T) {
 	err = m.Client.SetStringValuePath(path, expected)
 	require.NoError(t, err)
 
+	//nolint:staticcheck // Ignore SA1019: client.NewMockserverClient is deprecated
 	url := fmt.Sprintf("%s%s", m.Client.LocalURL(), path)
 	client := &http.Client{
 		Timeout: 10 * time.Second,

@@ -16,7 +16,7 @@ require (
 	github.com/docker/docker v27.3.1+incompatible
 	github.com/docker/go-connections v0.5.0
 	github.com/ethereum/go-ethereum v1.15.0
-	github.com/go-resty/resty/v2 v2.15.3
+	github.com/go-resty/resty/v2 v2.16.3
 	github.com/google/go-github/v41 v41.0.0
 	github.com/google/uuid v1.6.0
 	github.com/imdario/mergo v0.3.16
@@ -32,6 +32,7 @@ require (
 	github.com/prometheus/common v0.62.0
 	github.com/rs/zerolog v1.33.0
 	github.com/slack-go/slack v0.15.0
+	github.com/smartcontractkit/chainlink-testing-framework/parrot v0.4.1
 	github.com/smartcontractkit/chainlink-testing-framework/seth v1.50.10
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/pflag v1.0.5
@@ -48,6 +49,11 @@ require (
 	k8s.io/cli-runtime v0.31.2
 	k8s.io/client-go v0.31.2
 	k8s.io/kubectl v0.31.2
+)
+
+require (
+	github.com/go-chi/chi v1.5.5 // indirect
+	github.com/rs/xid v1.5.0 // indirect
 )
 
 require (

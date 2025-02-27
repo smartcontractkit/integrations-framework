@@ -11,6 +11,7 @@ import (
 	"github.com/rs/zerolog"
 	tc "github.com/testcontainers/testcontainers-go"
 
+	"github.com/smartcontractkit/chainlink-testing-framework/lib/logging"
 	"github.com/smartcontractkit/chainlink-testing-framework/lib/mirror"
 	"github.com/smartcontractkit/chainlink-testing-framework/lib/utils/testcontext"
 )
@@ -157,8 +158,10 @@ var LinuxPlatformImageRetrier = func(l zerolog.Logger, startErr error, req tc.Ge
 // It will try to start the container with the provided retriers, if none are provided it will use the default retriers.
 // Default being: 1. tries to download image for "linux/x86_64" platform 2. simply starts again without changing anything
 func StartContainerWithRetry(l zerolog.Logger, req tc.GenericContainerRequest, retriers ...StartContainerRetrier) (tc.Container, error) {
-	var ct tc.Container
-	var err error
+	var (
+		ct  tc.Container
+		err error
+	)
 
 	ct, err = tc.GenericContainer(testcontext.Get(nil), req)
 	if err == nil {
@@ -169,7 +172,26 @@ func StartContainerWithRetry(l zerolog.Logger, req tc.GenericContainerRequest, r
 		retriers = append(retriers, LinuxPlatformImageRetrier, NaiveRetrier)
 	}
 
-	l.Info().Err(err).Msgf("Cannot start %s container, retrying", req.Name)
+	l.Warn().Err(err).Msgf("Cannot start %s container, retrying", req.Name)
+
+	// DEBUG: Print logs if we can
+	cLogs, err := ct.Logs(context.Background())
+	if err != nil {
+		l.Debug().Err(err).Msgf("Cannot get logs for %s container", req.Name)
+	} else {
+		l.Debug().Msgf("Container Logs for %s:\n", req.Name)
+		if logging.LogLevelEnvVar == "debug" {
+			fmt.Printf("Container Logs for %s:\n", req.Name)
+			var logs []byte
+			_, err = cLogs.Read(logs)
+			if err != nil {
+				fmt.Println("Failed to read logs from container")
+				fmt.Println(err)
+			} else {
+				fmt.Println(string(logs))
+			}
+		}
+	}
 
 	req.Reuse = true // Try and see if we can reuse the container for a retry
 	for _, retrier := range retriers {

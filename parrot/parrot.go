@@ -22,6 +22,7 @@ import (
 	"github.com/go-resty/resty/v2"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/hlog"
+	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 const (
@@ -31,6 +32,8 @@ const (
 
 	// MethodAny is a wildcard for any HTTP method
 	MethodAny = "ANY"
+
+	logTimeFormat = "2006-01-02T15:04:05.000"
 )
 
 // These variables are set at build time and describe the Version of the application
@@ -40,6 +43,10 @@ var (
 	date    = time.Now().Format(time.RFC3339)
 	builtBy = "local"
 )
+
+func init() {
+	zerolog.TimeFieldFormat = logTimeFormat
+}
 
 // Route holds information about the mock route configuration
 type Route struct {
@@ -83,7 +90,7 @@ type Server struct {
 
 	// Logging
 	logFileName        string
-	logFile            *os.File
+	logFile            *lumberjack.Logger
 	logLevel           zerolog.Level
 	jsonLogs           bool
 	disableConsoleLogs bool
@@ -122,24 +129,26 @@ func NewServer(options ...ServerOption) (*Server, error) {
 	}
 
 	// Setup logger
-	var err error
-	p.logFile, err = os.Create(p.logFileName)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create log file: %w", err)
-	}
-
 	var writers []io.Writer
 
 	if !p.disableConsoleLogs {
 		if p.jsonLogs {
 			writers = append(writers, os.Stderr)
 		} else {
-			consoleOut := zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: "2006-01-02T15:04:05.000"}
+			consoleOut := zerolog.ConsoleWriter{Out: os.Stderr, TimeFormat: logTimeFormat}
 			writers = append(writers, consoleOut)
 		}
 	}
 
-	if p.logFile != nil {
+	p.logFile = &lumberjack.Logger{
+		Filename:   p.logFileName,
+		MaxSize:    100, // megabytes
+		MaxBackups: 10,
+		MaxAge:     30,
+		Compress:   true,
+	}
+
+	if p.logFileName != "" {
 		writers = append(writers, p.logFile)
 	}
 
@@ -147,7 +156,7 @@ func NewServer(options ...ServerOption) (*Server, error) {
 	p.log = zerolog.New(multiWriter).Level(p.logLevel).With().Timestamp().Logger()
 
 	// Setup server
-	listener, err := net.Listen("tcp", fmt.Sprintf(":%d", p.port))
+	listener, err := net.Listen("tcp", fmt.Sprintf("%s:%d", p.host, p.port))
 	if err != nil {
 		return nil, fmt.Errorf("failed to start listener: %w", err)
 	}
@@ -155,6 +164,7 @@ func NewServer(options ...ServerOption) (*Server, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to split host and port: %w", err)
 	}
+	// Update host and port if they were not set before
 	p.host = host
 	p.address = listener.Addr().String()
 	p.port, err = strconv.Atoi(port)
@@ -163,6 +173,7 @@ func NewServer(options ...ServerOption) (*Server, error) {
 	}
 
 	// Initialize router
+	p.router.Get("/", p.index())
 	p.router.Get(HealthRoute, p.healthHandlerGET)
 
 	p.router.Get(RoutesRoute, p.routesHandlerGET)
@@ -187,6 +198,14 @@ func NewServer(options ...ServerOption) (*Server, error) {
 	return p, nil
 }
 
+// index handles the root route
+func (p *Server) index() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/html")
+		_, _ = w.Write([]byte(`<html>Welcome to Parrot! See <a href="https://github.com/smartcontractkit/chainlink-testing-framework/tree/main/parrot">here</a> for docs</html>`))
+	}
+}
+
 // run starts the parrot server
 func (p *Server) run(listener net.Listener) {
 	defer func() {
@@ -202,8 +221,9 @@ func (p *Server) run(listener net.Listener) {
 		})
 	}()
 
-	p.log.Info().Str("Address", p.address).Msg("Parrot awake and ready to squawk")
+	p.log.Info().Str("Address", fmt.Sprintf("http://%s", p.address)).Msg("Parrot awake and ready to squawk")
 	p.log.Debug().
+		Int("Port", p.port).
 		Str("Save File", p.saveFileName).
 		Str("Log File", p.logFileName).
 		Str("Version", version).
@@ -334,6 +354,9 @@ func (p *Server) Register(route *Route) error {
 	}
 	if route == nil {
 		return ErrNilRoute
+	}
+	if !strings.HasPrefix(route.Path, "/") {
+		route.Path = "/" + route.Path
 	}
 	if !isValidPath(route.Path) {
 		return newDynamicError(ErrInvalidPath, fmt.Sprintf("'%s'", route.Path))

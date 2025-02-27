@@ -28,7 +28,7 @@ If you don't want to verify contracts or you can't or don't want to use `Blocksc
 
 You can use `Seth` to trace your transaction both from your Go code or from [the CLI](https://smartcontractkit.github.io/chainlink-testing-framework/libs/seth.html#single-transaction-tracing). Remember that you need to adjust `seth.toml` to point to gethwrappers or ABIs of contracts you want to trace.
 
-### Programatic
+### Programmatic
 
 If you want to use from Go code, you need to have a couple of things in mind:
 * you need to point Seth to your Gethwrappers, so that it can extract ABIs from them
@@ -57,4 +57,4 @@ if err != nil {
 }
 ```
 
-For more information about configuring `Seth` please read about [TOML config](https://smartcontractkit.github.io/chainlink-testing-framework/libs/seth.html#toml-configuration) and [programatic builder](https://smartcontractkit.github.io/chainlink-testing-framework/libs/seth.html#config).
+For more information about configuring `Seth` please read about [TOML config](https://smartcontractkit.github.io/chainlink-testing-framework/libs/seth.html#toml-configuration) and [programmatic builder](https://smartcontractkit.github.io/chainlink-testing-framework/libs/seth.html#config).

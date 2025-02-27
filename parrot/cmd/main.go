@@ -13,8 +13,17 @@ import (
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"github.com/smartcontractkit/chainlink-testing-framework/parrot"
 	"github.com/spf13/cobra"
+
+	"github.com/smartcontractkit/chainlink-testing-framework/parrot"
+)
+
+const (
+	envPort      = "PARROT_PORT"
+	envLogLevel  = "PARROT_LOG_LEVEL"
+	envJSON      = "PARROT_JSON"
+	envRecorders = "PARROT_RECORDERS"
+	envHost      = "PARROT_HOST"
 )
 
 func main() {
@@ -23,32 +32,38 @@ func main() {
 		debug     bool
 		trace     bool
 		silent    bool
+		logLevel  string
 		json      bool
 		recorders []string
+		host      string
 	)
 
 	preRun := func(cmd *cobra.Command, args []string) {
 		// Check environment variables if flags are not set
 		if !cmd.Flags().Changed("port") {
-			if envPort, err := strconv.Atoi(os.Getenv("PARROT_PORT")); err == nil {
+			if envPort, err := strconv.Atoi(os.Getenv(envPort)); err == nil {
 				port = envPort
 			}
 		}
-		if !cmd.Flags().Changed("debug") {
-			debug = os.Getenv("PARROT_DEBUG") == "true"
+		if !cmd.Flags().Changed("host") {
+			if addr := os.Getenv(envHost); addr != "" {
+				host = addr
+			}
 		}
-		if !cmd.Flags().Changed("trace") {
-			trace = os.Getenv("PARROT_TRACE") == "true"
-		}
-		if !cmd.Flags().Changed("silent") {
-			silent = os.Getenv("PARROT_SILENT") == "true"
+		if !cmd.Flags().Changed("debug") &&
+			!cmd.Flags().Changed("trace") &&
+			!cmd.Flags().Changed("silent") &&
+			!cmd.Flags().Changed("logLevel") {
+			if lvl := os.Getenv(envLogLevel); lvl != "" {
+				logLevel = lvl
+			}
 		}
 		if !cmd.Flags().Changed("json") {
-			json = os.Getenv("PARROT_JSON") == "true"
+			json = os.Getenv(envJSON) == "true"
 		}
 		if !cmd.Flags().Changed("recorders") {
-			if envRecorders := os.Getenv("PARROT_RECORDERS"); envRecorders != "" {
-				recorders = strings.Split(envRecorders, ",")
+			if r := os.Getenv(envRecorders); r != "" {
+				recorders = strings.Split(r, ",")
 			}
 		}
 	}
@@ -58,18 +73,25 @@ func main() {
 		Short:  "A server that can register and parrot back dynamic requests",
 		PreRun: preRun,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			options := []parrot.ServerOption{parrot.WithPort(port)}
-			logLevel := zerolog.InfoLevel
+			options := []parrot.ServerOption{parrot.WithPort(port), parrot.WithHost(host)}
+			zerologLevel := zerolog.InfoLevel
 			if debug {
-				logLevel = zerolog.DebugLevel
+				zerologLevel = zerolog.DebugLevel
 			}
 			if trace {
-				logLevel = zerolog.TraceLevel
+				zerologLevel = zerolog.TraceLevel
 			}
 			if silent {
-				logLevel = zerolog.Disabled
+				zerologLevel = zerolog.Disabled
 			}
-			options = append(options, parrot.WithLogLevel(logLevel))
+			if logLevel != "" {
+				parsedLevel, err := zerolog.ParseLevel(logLevel)
+				if err != nil {
+					return err
+				}
+				zerologLevel = parsedLevel
+			}
+			options = append(options, parrot.WithLogLevel(zerologLevel))
 			if json {
 				options = append(options, parrot.WithJSONLogs())
 			}
@@ -94,12 +116,14 @@ func main() {
 		},
 	}
 
-	rootCmd.PersistentFlags().IntVarP(&port, "port", "p", 0, "Port to run the parrot on (env: PARROT_PORT)")
-	rootCmd.Flags().BoolVarP(&debug, "debug", "d", false, "Enable debug output (env: PARROT_DEBUG)")
-	rootCmd.Flags().BoolVarP(&trace, "trace", "t", false, "Enable trace and debug output (env: PARROT_TRACE)")
-	rootCmd.Flags().BoolVarP(&silent, "silent", "s", false, "Disable all output (env: PARROT_SILENT)")
-	rootCmd.Flags().BoolVarP(&json, "json", "j", false, "Output logs in JSON format (env: PARROT_JSON)")
-	rootCmd.Flags().StringSliceVarP(&recorders, "recorders", "r", nil, "Existing recorders to use (env: PARROT_RECORDERS)")
+	rootCmd.PersistentFlags().IntVarP(&port, "port", "p", 0, fmt.Sprintf("Port to run the parrot on (env: %s)", envPort))
+	rootCmd.Flags().BoolVarP(&debug, "debug", "d", false, "Enable debug output")
+	rootCmd.Flags().BoolVarP(&trace, "trace", "t", false, "Enable trace and debug output")
+	rootCmd.Flags().BoolVarP(&silent, "silent", "s", false, "Disable all output")
+	rootCmd.Flags().StringVarP(&logLevel, "logLevel", "l", "", fmt.Sprintf("Set the log level (env: %s)", envLogLevel))
+	rootCmd.Flags().BoolVarP(&json, "json", "j", false, fmt.Sprintf("Output logs in JSON format (env: %s)", envJSON))
+	rootCmd.Flags().StringSliceVarP(&recorders, "recorders", "r", nil, fmt.Sprintf("Existing recorders to use (env: %s)", envRecorders))
+	rootCmd.Flags().StringVar(&host, "host", "localhost", fmt.Sprintf("Host to run the parrot on. (env: %s)", envHost))
 
 	healthCheckCmd := &cobra.Command{
 		Use:    "health",

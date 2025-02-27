@@ -1,0 +1,23 @@
+replicas: 1
+
+image:
+  repository: kalverra/parrot
+  version: v0.5.1
+  imagePullPolicy: IfNotPresent
+
+logLevel: trace
+
+resources:
+  limits:
+    cpu: 250m
+    memory: 256Mi
+
+service:
+  type: ClusterIP
+  port: 80
+
+persistence:
+  enabled: true
+  accessMode: ReadWriteOnce
+  size: 1Gi
+  mountPath: /app

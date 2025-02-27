@@ -15,12 +15,16 @@ import (
 )
 
 // MockserverClient mockserver client
+//
+// Deprecated: Use Parrot instead
 type MockserverClient struct {
 	APIClient *resty.Client
 	Config    *MockserverConfig
 }
 
 // MockserverConfig holds config information for MockserverClient
+//
+// Deprecated: Use Parrot instead
 type MockserverConfig struct {
 	LocalURL   string
 	ClusterURL string
@@ -28,6 +32,8 @@ type MockserverConfig struct {
 }
 
 // ConnectMockServer creates a connection to a deployed mockserver in the environment
+//
+// Deprecated: Use Parrot instead
 func ConnectMockServer(e *environment.Environment) *MockserverClient {
 	c := NewMockserverClient(&MockserverConfig{
 		LocalURL:   e.URLs[mockserver.LocalURLsKey][0],
@@ -37,6 +43,8 @@ func ConnectMockServer(e *environment.Environment) *MockserverClient {
 }
 
 // ConnectMockServerURL creates a connection to a mockserver at a given url, should only be used for inside K8s tests
+//
+// Deprecated: Use Parrot instead
 func ConnectMockServerURL(url string) *MockserverClient {
 	c := NewMockserverClient(&MockserverConfig{
 		LocalURL:   url,
@@ -46,6 +54,8 @@ func ConnectMockServerURL(url string) *MockserverClient {
 }
 
 // NewMockserverClient returns a mockserver client
+//
+// Deprecated: Use Parrot instead
 func NewMockserverClient(cfg *MockserverConfig) *MockserverClient {
 	log.Debug().Str("Local URL", cfg.LocalURL).Str("Remote URL", cfg.ClusterURL).Msg("Connected to MockServer")
 	isDebug := os.Getenv("RESTY_DEBUG") == "true"
@@ -213,26 +223,36 @@ func (em *MockserverClient) SetStringValuePath(path string, stringValue string) 
 }
 
 // LocalURL returns the local url of the mockserver
+//
+// Deprecated: Use Parrot instead
 func (em *MockserverClient) LocalURL() string {
 	return em.Config.LocalURL
 }
 
 // PathSelector represents the json object used to find expectations by path
+//
+// Deprecated: Use Parrot instead
 type PathSelector struct {
 	Path string `json:"path"`
 }
 
 // HttpRequest represents the httpRequest json object used in the mockserver initializer
+//
+// Deprecated: Use Parrot instead
 type HttpRequest struct {
 	Path string `json:"path"`
 }
 
 // HttpResponse represents the httpResponse json object used in the mockserver initializer
+//
+// Deprecated: Use Parrot instead
 type HttpResponse struct {
 	Body interface{} `json:"body"`
 }
 
 // HttpInitializer represents an element of the initializer array used in the mockserver initializer
+//
+// Deprecated: Use Parrot instead
 type HttpInitializer struct {
 	Id       string       `json:"id"`
 	Request  HttpRequest  `json:"httpRequest"`
@@ -240,12 +260,16 @@ type HttpInitializer struct {
 }
 
 // HttpResponse represents the httpResponse json object used in the mockserver initializer
+//
+// Deprecated: Use Parrot instead
 type HttpResponseTemplate struct {
 	Template     string `json:"template"`
 	TemplateType string `json:"templateType"`
 }
 
 // HttpInitializer represents an element of the initializer array used in the mockserver initializer
+//
+// Deprecated: Use Parrot instead
 type HttpInitializerTemplate struct {
 	Id       string               `json:"id"`
 	Request  HttpRequest          `json:"httpRequest"`
@@ -255,12 +279,16 @@ type HttpInitializerTemplate struct {
 // For OTPE - weiwatchers
 
 // NodeInfoJSON represents an element of the nodes array used to deliver configs to otpe
+//
+// Deprecated: Use Parrot instead
 type NodeInfoJSON struct {
 	ID          string   `json:"id"`
 	NodeAddress []string `json:"nodeAddress"`
 }
 
 // ContractInfoJSON represents an element of the contracts array used to deliver configs to otpe
+//
+// Deprecated: Use Parrot instead
 type ContractInfoJSON struct {
 	ContractAddress string `json:"contractAddress"`
 	ContractVersion int    `json:"contractVersion"`
@@ -271,11 +299,15 @@ type ContractInfoJSON struct {
 // For Adapter endpoints
 
 // AdapterResult represents an int result for an adapter
+//
+// Deprecated: Use Parrot instead
 type AdapterResult struct {
 	Result interface{} `json:"result"`
 }
 
 // AdapterResponse represents a response from an adapter
+//
+// Deprecated: Use Parrot instead
 type AdapterResponse struct {
 	Id    string        `json:"id"`
 	Data  AdapterResult `json:"data"`

@@ -9,6 +9,14 @@ import (
 // ServerOption defines functional options for configuring the ParrotServer
 type ServerOption func(*Server) error
 
+// WithHost sets the address for the ParrotServer to run on
+func WithHost(host string) ServerOption {
+	return func(s *Server) error {
+		s.host = host
+		return nil
+	}
+}
+
 // WithPort sets the port for the ParrotServer to run on
 func WithPort(port int) ServerOption {
 	return func(s *Server) error {

@@ -24,7 +24,7 @@ linters-settings:
   exhaustive:
     default-signifies-exhaustive: true
   goimports:
-    local-prefixes: github.com/smartcontractkit/chainlink-testing-framework/lib
+    local-prefixes: github.com/smartcontractkit/chainlink-testing-framework/
   gosec:
     exclude-generated: true
   errorlint:

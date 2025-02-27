@@ -26,6 +26,7 @@ import (
 
 const defaultKillgraveImage = "friendsofgo/killgrave:v0.5.1-request-dump"
 
+// Deprecated: Use Parrot instead
 type Killgrave struct {
 	EnvComponent
 	ExternalEndpoint      string
@@ -39,11 +40,14 @@ type Killgrave struct {
 }
 
 // Imposter define an imposter structure
+//
+// Deprecated: Use Parrot instead
 type KillgraveImposter struct {
 	Request  KillgraveRequest  `json:"request"`
 	Response KillgraveResponse `json:"response"`
 }
 
+// Deprecated: Use Parrot instead
 type KillgraveRequest struct {
 	Method     string             `json:"method"`
 	Endpoint   string             `json:"endpoint,omitempty"`
@@ -53,6 +57,8 @@ type KillgraveRequest struct {
 }
 
 // Response represent the structure of real response
+//
+// Deprecated: Use Parrot instead
 type KillgraveResponse struct {
 	Status   int                     `json:"status"`
 	Body     string                  `json:"body,omitempty"`
@@ -62,12 +68,16 @@ type KillgraveResponse struct {
 }
 
 // ResponseDelay represent time delay before server responds.
+//
+// Deprecated: Use Parrot instead
 type KillgraveResponseDelay struct {
 	Delay  int64 `json:"delay,omitempty"`
 	Offset int64 `json:"offset,omitempty"`
 }
 
 // AdapterResponse represents a response from an adapter
+//
+// Deprecated: Use Parrot instead
 type KillgraveAdapterResponse struct {
 	Id    string                 `json:"id"`
 	Data  KillgraveAdapterResult `json:"data"`
@@ -75,6 +85,8 @@ type KillgraveAdapterResponse struct {
 }
 
 // AdapterResult represents an int result for an adapter
+//
+// Deprecated: Use Parrot instead
 type KillgraveAdapterResult struct {
 	Result interface{} `json:"result"`
 }
@@ -82,6 +94,8 @@ type KillgraveAdapterResult struct {
 // NewKillgrave initializes a new Killgrave instance with specified networks and imposters directory.
 // It sets default configurations and allows for optional environment component modifications.
 // This function is useful for creating a Killgrave service for testing and simulating APIs.
+//
+// Deprecated: Use Parrot instead
 func NewKillgrave(networks []string, impostersDirectoryPath string, opts ...EnvComponentOption) *Killgrave {
 	k := &Killgrave{
 		EnvComponent: EnvComponent{
@@ -320,6 +334,7 @@ func (k *Killgrave) SetAdapterBasedIntValuePath(path string, methods []string, v
 	return k.SetAdapterBasedAnyValuePath(path, methods, v)
 }
 
+// Deprecated: Use Parrot instead
 type RequestData struct {
 	Method string              `json:"method"`
 	Host   string              `json:"host"`

@@ -22,8 +22,10 @@ import (
 
 const defaultMockServerImage = "mockserver/mockserver:5.15.0"
 
+// Deprecated: Use Parrot instead
 type MockServer struct {
 	EnvComponent
+	//nolint:staticcheck // Ignore SA1019: MockserverClient is deprecated
 	Client           *ctfClient.MockserverClient
 	Endpoint         string
 	InternalEndpoint string
@@ -35,6 +37,8 @@ type MockServer struct {
 // NewMockServer creates a new instance of MockServer with specified networks and options.
 // It initializes the server with a unique container name and a default startup timeout.
 // This function is useful for testing decentralized applications in a controlled environment.
+//
+// Deprecated: Use Parrot instead
 func NewMockServer(networks []string, opts ...EnvComponentOption) *MockServer {
 	ms := &MockServer{
 		EnvComponent: EnvComponent{
@@ -111,6 +115,7 @@ func (ms *MockServer) StartContainer() error {
 	ms.Endpoint = endpoint
 	ms.InternalEndpoint = fmt.Sprintf("http://%s:%s", ms.ContainerName, "1080")
 
+	//nolint:staticcheck // Ignore SA1019: client.NewMockserverClient is deprecated
 	client := ctfClient.NewMockserverClient(&ctfClient.MockserverConfig{
 		LocalURL:   endpoint,
 		ClusterURL: ms.InternalEndpoint,

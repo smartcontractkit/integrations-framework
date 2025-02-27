@@ -56,8 +56,8 @@ type RouteCallResponse struct {
 // RecorderOption is a function that modifies a recorder
 type RecorderOption func(*Recorder)
 
-// WithHost sets the host of the recorder
-func WithHost(host string) RecorderOption {
+// WithRecorderHost sets the host of the recorder
+func WithRecorderHost(host string) RecorderOption {
 	return func(r *Recorder) {
 		r.Host = host
 	}

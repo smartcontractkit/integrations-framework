@@ -2,8 +2,10 @@ package blockchain
 
 import (
 	"fmt"
-	"github.com/smartcontractkit/chainlink-testing-framework/framework"
+
 	"github.com/testcontainers/testcontainers-go"
+
+	"github.com/smartcontractkit/chainlink-testing-framework/framework"
 )
 
 // Input is a blockchain network configuration params
@@ -75,6 +77,8 @@ func NewBlockchainNetwork(in *Input) (*Output, error) {
 		out, err = newSui(in)
 	case "tron":
 		out, err = newTron(in)
+	case "anvil-zksync":
+		out, err = newAnvilZksync(in)
 	default:
 		return nil, fmt.Errorf("blockchain type is not supported or empty, must be 'anvil' or 'geth'")
 	}

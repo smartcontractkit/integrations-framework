@@ -3,11 +3,13 @@ package blockchain
 import (
 	"context"
 	"fmt"
+	"path/filepath"
+
 	"github.com/docker/docker/api/types/container"
-	"github.com/smartcontractkit/chainlink-testing-framework/framework"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
-	"path/filepath"
+
+	"github.com/smartcontractkit/chainlink-testing-framework/framework"
 )
 
 var (
@@ -17,7 +19,7 @@ var (
 
 func defaultAptos(in *Input) {
 	if in.Image == "" {
-		in.Image = "aptoslabs/tools:aptos-node-v1.18.0"
+		in.Image = "aptoslabs/tools:aptos-node-v1.27.1"
 	}
 	if in.Port != "" {
 		framework.L.Warn().Msg("'port' field is set but only default port can be used: 8080")
@@ -85,7 +87,7 @@ func newAptos(in *Input) (*Output, error) {
 	if err != nil {
 		return nil, err
 	}
-	fundCmd := []string{"aptos", "account", "fund-with-faucet", "--account", DefaultAptosAccount}
+	fundCmd := []string{"aptos", "account", "fund-with-faucet", "--account", DefaultAptosAccount, "--amount", "1000000000000"}
 	_, err = framework.ExecContainer(containerName, fundCmd)
 	if err != nil {
 		return nil, err
